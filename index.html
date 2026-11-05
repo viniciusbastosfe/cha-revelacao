@@ -124,6 +124,7 @@ html.locked, html.locked body { overflow: hidden; height: 100%; overscroll-behav
   overflow: hidden;
   touch-action: none;
   overscroll-behavior: contain;
+  cursor: pointer;
   background: #F3DCDF url("img/ceu.webp") center / cover no-repeat;
   color: var(--ink);
   transition: opacity 1.1s ease, visibility 0s linear 1.1s;
@@ -770,7 +771,9 @@ function openInvite() {
   removeEventListener("keydown", blockKeys);
   setTimeout(() => { intro.hidden = true; }, 1200);
 }
-$("#pop").addEventListener("click", async () => {
+// a tap anywhere on the intro pops the balloon; the button stays for keyboard users
+intro.addEventListener("click", async () => {
+  if (opened || intro.classList.contains("playing")) return;
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return openInvite();
   intro.classList.add("playing");
   video.addEventListener("ended", openInvite, { once: true });
