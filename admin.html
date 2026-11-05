@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Placar do Chá</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..600,0..100;1,9..144,300..600,0..100&family=Jost:wght@300;400;500&family=Pinyon+Script&display=swap">
+<style>
+/* Layout: the invite's paper and ink, turned into a working board: score first, then the list. */
+:root {
+  --paper: #FBF6F1;
+  --paper-deep: #F4ECE4;
+  --ink: #4B3F45;
+  --ink-soft: rgba(75, 63, 69, .72);
+  --line: rgba(75, 63, 69, .18);
+  --rose: #B9737D;
+  --rose-wash: #F3DFDF;
+  --blue: #6F8FAF;
+  --blue-wash: #DDE8F1;
+  --bad: #9A4552;
+  --f-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --f-script: "Pinyon Script", "Snell Roundhand", cursive;
+  --f-label: "Jost", "Avenir Next", "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { overflow-x: clip; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-display);
+  font-variation-settings: "SOFT" 100;
+  font-weight: 300;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+[hidden] { display: none !important; }
+.wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding-block: 32px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.eyebrow { font-family: var(--f-label); font-size: .74rem; letter-spacing: .26em; text-transform: uppercase; color: var(--ink-soft); margin: 0; }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; border-bottom: 1px solid var(--line); padding-bottom: 18px; }
+header h1 { font-family: var(--f-script); font-weight: 400; font-size: clamp(2.4rem, 7vw, 3.2rem); line-height: 1; margin: 6px 0 0; }
+.tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.stamp { font-family: var(--f-label); font-size: .8rem; color: var(--ink-soft); }
+
+.btn {
+  font-family: var(--f-label);
+  font-size: .74rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  padding: 12px 20px;
+  cursor: pointer;
+}
+.btn.ghost { background: transparent; color: var(--ink); }
+.btn:hover { opacity: .85; }
+.btn:focus-visible, .field:focus-visible, .del:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.btn:disabled { opacity: .5; cursor: progress; }
+
+/* login */
+.login { max-width: 380px; margin: 9vh auto 0; display: grid; gap: 14px; }
+.login h2 { font-weight: 300; font-size: 2rem; margin: 0; }
+.login label { font-family: var(--f-label); font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-soft); }
+.field { width: 100%; font: inherit; color: inherit; background: transparent; border: 1px solid var(--line); padding: 12px 14px; border-radius: 0; }
+.err { color: var(--bad); font-family: var(--f-label); font-size: .85rem; min-height: 1.2em; margin: 0; }
+
+/* score */
+.score { margin: 34px 0 10px; display: grid; gap: 14px; }
+.teams { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: 16px; }
+.team { display: grid; gap: 2px; }
+.team.r { text-align: right; }
+.team .nm { font-family: var(--f-script); font-size: clamp(2.2rem, 7vw, 3.4rem); line-height: 1; }
+.team.b .nm { color: var(--blue); }
+.team.r .nm { color: var(--rose); }
+.team .n { font-size: clamp(2.6rem, 9vw, 4.4rem); font-style: italic; line-height: 1; font-variant-numeric: tabular-nums lining-nums; }
+.vs { font-style: italic; color: var(--ink-soft); padding-bottom: 14px; }
+.bar { display: flex; height: 12px; background: var(--paper-deep); overflow: hidden; }
+.bar i { display: block; height: 100%; transition: width .6s ease; }
+.bar .b { background: var(--blue); }
+.bar .r { background: var(--rose); }
+.pct { display: flex; justify-content: space-between; font-family: var(--f-label); font-size: .8rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); border-block: 1px solid var(--line); margin: 30px 0; }
+.stat { padding: 16px 14px; border-right: 1px solid var(--line); min-width: 0; }
+.stat:last-child { border-right: 0; }
+.stat b { display: block; font-weight: 300; font-size: 2rem; font-style: italic; line-height: 1.1; font-variant-numeric: tabular-nums lining-nums; }
+.stat span { font-family: var(--f-label); font-size: .7rem; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-soft); }
+.stat small { display: block; font-family: var(--f-label); font-size: .78rem; color: var(--ink-soft); margin-top: 4px; }
+
+/* list */
+.list-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.list-head h2 { font-weight: 300; font-size: 1.6rem; margin: 0; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { font-family: var(--f-label); font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; padding: 7px 12px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.table-wrap { overflow-x: auto; border-top: 1px solid var(--line); }
+table { width: 100%; border-collapse: collapse; min-width: 760px; }
+th, td { text-align: left; padding: 12px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--f-label); font-weight: 400; font-size: .7rem; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-soft); white-space: nowrap; }
+td.num { font-variant-numeric: tabular-nums; }
+td.recado { max-width: 300px; color: var(--ink-soft); font-style: italic; }
+td.when { font-family: var(--f-label); font-size: .8rem; color: var(--ink-soft); white-space: nowrap; }
+.pill { display: inline-block; font-family: var(--f-label); font-size: .72rem; letter-spacing: .08em; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.pill.sim { background: #E4EBDD; color: #4F6142; }
+.pill.nao { background: var(--paper-deep); color: var(--ink-soft); }
+.pill.Conrado { background: var(--blue-wash); color: #45627F; }
+.pill.Beatriz { background: var(--rose-wash); color: #8E4F59; }
+.del { font-family: var(--f-label); font-size: .72rem; background: transparent; border: 1px solid transparent; color: var(--ink-soft); padding: 4px 8px; cursor: pointer; white-space: nowrap; }
+.del:hover { border-color: var(--line); }
+.del.arm { color: var(--bad); border-color: var(--bad); }
+.empty { padding: 40px 10px; text-align: center; color: var(--ink-soft); font-style: italic; }
+.note { font-family: var(--f-label); font-size: .85rem; color: var(--bad); }
+
+@media (max-width: 560px) {
+  .stat { border-right: 0; border-bottom: 1px solid var(--line); }
+  .stat:last-child { border-bottom: 0; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <p class="eyebrow">Chá Revelação · Painel</p>
+      <h1>Bruna &amp; Vinícius</h1>
+    </div>
+    <div class="tools" id="tools" hidden>
+      <span class="stamp" id="stamp"></span>
+      <button class="btn ghost" type="button" id="refresh">Atualizar</button>
+      <button class="btn ghost" type="button" id="logout">Sair</button>
+    </div>
+  </header>
+
+  <form class="login" id="login" novalidate>
+    <h2>Entrar</h2>
+    <p class="eyebrow" style="letter-spacing:.1em;text-transform:none">Use o e-mail e a senha da sua conta no Supabase.</p>
+    <label for="email">E-mail</label>
+    <input class="field" id="email" type="email" autocomplete="username" required>
+    <label for="password">Senha</label>
+    <input class="field" id="password" type="password" autocomplete="current-password" required>
+    <p class="err" id="login-err" role="alert"></p>
+    <button class="btn" type="submit" id="login-btn">Entrar</button>
+  </form>
+
+  <main id="board" hidden>
+    <section class="score" aria-label="Placar dos palpites">
+      <p class="eyebrow">Placar dos palpites</p>
+      <div class="teams">
+        <div class="team b"><span class="nm">Conrado</span><span class="n" id="n-c">0</span></div>
+        <span class="vs">×</span>
+        <div class="team r"><span class="nm">Beatriz</span><span class="n" id="n-b">0</span></div>
+      </div>
+      <div class="bar" aria-hidden="true"><i class="b" id="bar-c" style="width:50%"></i><i class="r" id="bar-b" style="width:50%"></i></div>
+      <div class="pct"><span id="p-c">–</span><span id="p-b">–</span></div>
+    </section>
+
+    <div class="stats">
+      <div class="stat"><b id="s-pessoas">0</b><span>Pessoas confirmadas</span><small id="s-respostas"></small></div>
+      <div class="stat"><b id="s-nao">0</b><span>Não vão</span></div>
+      <div class="stat"><b id="s-fraldas">0</b><span>Fraldas</span><small id="s-tamanhos"></small></div>
+      <div class="stat"><b id="s-mimos">0</b><span>Mimos</span></div>
+    </div>
+
+    <div class="list-head">
+      <h2>Respostas</h2>
+      <div class="filters" role="group" aria-label="Filtrar respostas">
+        <button class="chip" type="button" data-f="todos" aria-pressed="true">Todos</button>
+        <button class="chip" type="button" data-f="sim" aria-pressed="false">Vão</button>
+        <button class="chip" type="button" data-f="nao" aria-pressed="false">Não vão</button>
+      </div>
+    </div>
+    <p class="note" id="note" hidden></p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Nome</th><th>Presença</th><th>Pessoas</th><th>Palpite</th><th>Vai levar</th><th>Recado</th><th>Quando</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script>
+const SB = { url: "https://iatckuzrrzedfmidewzi.supabase.co", key: "sb_publishable_2Sqv9jTB5Mffevn3yvDP_Q_LgRGmNML" };
+const OWNER = "viniciusbastosfe@gmail.com";
+const $ = (s) => document.querySelector(s);
+const store = {
+  get() { try { return JSON.parse(localStorage.getItem("cha-admin") || "null"); } catch { return null; } },
+  set(v) { try { v ? localStorage.setItem("cha-admin", JSON.stringify(v)) : localStorage.removeItem("cha-admin"); } catch {} },
+};
+let session = store.get();
+let rows = [];
+let filter = "todos";
+let timer = null;
+
+async function auth(grant, body) {
+  const res = await fetch(`${SB.url}/auth/v1/token?grant_type=${grant}`, {
+    method: "POST",
+    headers: { apikey: SB.key, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw Object.assign(new Error(data.error_description || data.msg || "auth"), { status: res.status });
+  return { access_token: data.access_token, refresh_token: data.refresh_token, expires_at: Date.now() + (data.expires_in - 60) * 1000, email: data.user?.email || "" };
+}
+async function token() {
+  if (!session) throw new Error("no session");
+  if (Date.now() > session.expires_at) {
+    session = await auth("refresh_token", { refresh_token: session.refresh_token });
+    store.set(session);
+  }
+  return session.access_token;
+}
+async function api(path, opts = {}) {
+  const res = await fetch(`${SB.url}/rest/v1/${path}`, {
+    ...opts,
+    headers: { apikey: SB.key, Authorization: "Bearer " + (await token()), "Content-Type": "application/json", ...(opts.headers || {}) },
+  });
+  if (res.status === 401) { logout(); throw new Error("expired"); }
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return res.status === 204 ? null : res.json();
+}
+
+async function load() {
+  $("#refresh").disabled = true;
+  try {
+    rows = await api("cha_rsvp?select=*&order=created_at.desc");
+    $("#stamp").textContent = "Atualizado às " + new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    render();
+  } catch (e) {
+    if (e.message !== "expired") $("#stamp").textContent = "Não foi possível atualizar agora.";
+  } finally {
+    $("#refresh").disabled = false;
+  }
+}
+
+function render() {
+  const c = rows.filter((r) => r.palpite === "Conrado").length;
+  const b = rows.filter((r) => r.palpite === "Beatriz").length;
+  const total = c + b;
+  $("#n-c").textContent = c;
+  $("#n-b").textContent = b;
+  $("#bar-c").style.width = total ? (c / total) * 100 + "%" : "50%";
+  $("#bar-b").style.width = total ? (b / total) * 100 + "%" : "50%";
+  $("#p-c").textContent = total ? Math.round((c / total) * 100) + "%" : "–";
+  $("#p-b").textContent = total ? Math.round((b / total) * 100) + "%" : "–";
+
+  const yes = rows.filter((r) => r.vem);
+  $("#s-pessoas").textContent = yes.reduce((s, r) => s + (r.pessoas || 0), 0);
+  $("#s-respostas").textContent = yes.length === 1 ? "1 confirmação" : `${yes.length} confirmações`;
+  $("#s-nao").textContent = rows.length - yes.length;
+  const sizes = { P: 0, M: 0, G: 0 };
+  yes.forEach((r) => { const m = /tamanho (P|M|G)/.exec(r.levar || ""); if (m) sizes[m[1]]++; });
+  $("#s-fraldas").textContent = sizes.P + sizes.M + sizes.G;
+  $("#s-tamanhos").textContent = `P ${sizes.P} · M ${sizes.M} · G ${sizes.G}`;
+  $("#s-mimos").textContent = yes.filter((r) => r.levar === "Um mimo").length;
+
+  const note = $("#note");
+  note.hidden = !(rows.length === 0 && session.email && session.email.toLowerCase() !== OWNER);
+  note.textContent = `Você entrou como ${session.email}. Só ${OWNER} pode ver as respostas.`;
+
+  const tbody = $("#rows");
+  tbody.replaceChildren();
+  const list = rows.filter((r) => filter === "todos" || (filter === "sim" ? r.vem : !r.vem));
+  if (!list.length) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 8;
+    td.className = "empty";
+    td.textContent = rows.length ? "Nenhuma resposta neste filtro." : "Ainda não chegou nenhuma resposta. Quando alguém confirmar pelo convite, aparece aqui.";
+    tr.append(td);
+    tbody.append(tr);
+    return;
+  }
+  for (const r of list) {
+    const tr = document.createElement("tr");
+    const cell = (text, cls) => { const td = document.createElement("td"); if (cls) td.className = cls; td.textContent = text ?? ""; tr.append(td); return td; };
+    const pill = (text, cls) => { const td = document.createElement("td"); if (text) { const s = document.createElement("span"); s.className = "pill " + cls; s.textContent = text; td.append(s); } tr.append(td); };
+    cell(r.nome);
+    pill(r.vem ? "Vai" : "Não vai", r.vem ? "sim" : "nao");
+    cell(r.vem ? r.pessoas : "–", "num");
+    pill(r.palpite ? "Time " + r.palpite : "", r.palpite || "");
+    cell(r.levar || (r.vem ? "–" : ""));
+    cell(r.recado || "", "recado");
+    cell(new Date(r.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }), "when");
+    const td = document.createElement("td");
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "del";
+    del.textContent = "Excluir";
+    del.addEventListener("click", async () => {
+      if (!del.classList.contains("arm")) {
+        del.classList.add("arm");
+        del.textContent = "Confirmar exclusão";
+        setTimeout(() => { del.classList.remove("arm"); del.textContent = "Excluir"; }, 4000);
+        return;
+      }
+      del.disabled = true;
+      try { await api("cha_rsvp?id=eq." + encodeURIComponent(r.id), { method: "DELETE" }); await load(); }
+      catch { del.disabled = false; del.textContent = "Não excluiu, tente de novo"; }
+    });
+    td.append(del);
+    tr.append(td);
+    tbody.append(tr);
+  }
+}
+
+function showBoard() {
+  $("#login").hidden = true;
+  $("#board").hidden = false;
+  $("#tools").hidden = false;
+  load();
+  clearInterval(timer);
+  timer = setInterval(load, 20000);
+}
+function logout() {
+  session = null;
+  store.set(null);
+  clearInterval(timer);
+  $("#board").hidden = true;
+  $("#tools").hidden = true;
+  $("#login").hidden = false;
+}
+
+$("#login").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = $("#email").value.trim();
+  const password = $("#password").value;
+  if (!email || !password) { $("#login-err").textContent = "Preencha e-mail e senha."; return; }
+  $("#login-btn").disabled = true;
+  $("#login-err").textContent = "";
+  try {
+    session = await auth("password", { email, password });
+    store.set(session);
+    $("#password").value = "";
+    showBoard();
+  } catch (err) {
+    $("#login-err").textContent = err.status === 400 ? "E-mail ou senha incorretos." : "Não foi possível entrar agora. Tente de novo.";
+  } finally {
+    $("#login-btn").disabled = false;
+  }
+});
+$("#refresh").addEventListener("click", load);
+$("#logout").addEventListener("click", logout);
+document.querySelectorAll(".chip").forEach((chip) => chip.addEventListener("click", () => {
+  filter = chip.dataset.f;
+  document.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", c === chip));
+  render();
+}));
+document.addEventListener("visibilitychange", () => { if (!document.hidden && session && !$("#board").hidden) load(); });
+
+if (session) showBoard();
+</script>
+</body>
+</html>
