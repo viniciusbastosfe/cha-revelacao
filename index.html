@@ -841,7 +841,7 @@ document.querySelectorAll(".team").forEach((t) => t.addEventListener("click", ()
 document.querySelectorAll("input[name=palpite]").forEach((r) => r.addEventListener("change", () => setTeam(r.value)));
 
 /* diaper size by first letter of the name */
-const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toUpperCase();
+const norm = (s) => s.normalize("NFD").replace(/\p{M}/gu, "").trim().toUpperCase();
 function sizeFor(name) {
   const c = norm(name).charAt(0);
   if (!/[A-Z]/.test(c)) return "";
