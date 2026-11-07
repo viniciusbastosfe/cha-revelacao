@@ -210,6 +210,7 @@ let session = store.get();
 let rows = [];
 let filter = "todos";
 let timer = null;
+let loaded = false;
 
 async function auth(grant, body) {
   const res = await fetch(`${SB.url}/auth/v1/token?grant_type=${grant}`, {
@@ -221,11 +222,22 @@ async function auth(grant, body) {
   if (!res.ok) throw Object.assign(new Error(data.error_description || data.msg || "auth"), { status: res.status });
   return { access_token: data.access_token, refresh_token: data.refresh_token, expires_at: Date.now() + (data.expires_in - 60) * 1000, email: data.user?.email || "" };
 }
+// One refresh at a time: refresh tokens are single-use, so two parallel refreshes
+// (interval + tab focus) would revoke the session.
+let refreshing = null;
+const EXPIRED = "Sua sessão expirou. Entre de novo para ver as respostas.";
 async function token() {
-  if (!session) throw new Error("no session");
+  if (!session) throw new Error("expired");
   if (Date.now() > session.expires_at) {
-    session = await auth("refresh_token", { refresh_token: session.refresh_token });
-    store.set(session);
+    refreshing ||= auth("refresh_token", { refresh_token: session.refresh_token })
+      .then((s) => { session = { ...s, email: s.email || session.email }; store.set(session); })
+      .finally(() => { refreshing = null; });
+    try {
+      await refreshing;
+    } catch (e) {
+      if (e.status === 400 || e.status === 401) { logout(EXPIRED); throw new Error("expired"); }
+      throw e;
+    }
   }
   return session.access_token;
 }
@@ -234,7 +246,7 @@ async function api(path, opts = {}) {
     ...opts,
     headers: { apikey: SB.key, Authorization: "Bearer " + (await token()), "Content-Type": "application/json", ...(opts.headers || {}) },
   });
-  if (res.status === 401) { logout(); throw new Error("expired"); }
+  if (res.status === 401) { logout(EXPIRED); throw new Error("expired"); }
   if (!res.ok) throw new Error("HTTP " + res.status);
   return res.status === 204 ? null : res.json();
 }
@@ -243,10 +255,17 @@ async function load() {
   $("#refresh").disabled = true;
   try {
     rows = await api("cha_rsvp?select=*&order=created_at.desc");
+    loaded = true;
     $("#stamp").textContent = "Atualizado às " + new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
     render();
   } catch (e) {
-    if (e.message !== "expired") $("#stamp").textContent = "Não foi possível atualizar agora.";
+    if (e.message !== "expired") {
+      $("#stamp").textContent = "Não foi possível atualizar agora.";
+      if (!loaded) {
+        $("#note").hidden = false;
+        $("#note").textContent = "Não conseguimos carregar as respostas. Toque em Atualizar ou entre de novo.";
+      }
+    }
   } finally {
     $("#refresh").disabled = false;
   }
@@ -327,17 +346,21 @@ function showBoard() {
   $("#login").hidden = true;
   $("#board").hidden = false;
   $("#tools").hidden = false;
+  $("#login-err").textContent = "";
+  $("#stamp").textContent = "Carregando…";
+  loaded = false;
   load();
   clearInterval(timer);
   timer = setInterval(load, 20000);
 }
-function logout() {
+function logout(msg) {
   session = null;
   store.set(null);
   clearInterval(timer);
   $("#board").hidden = true;
   $("#tools").hidden = true;
   $("#login").hidden = false;
+  $("#login-err").textContent = typeof msg === "string" ? msg : "";
 }
 
 $("#login").addEventListener("submit", async (e) => {
